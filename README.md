@@ -58,15 +58,30 @@ once instead of waiting for each one to finish before starting the next.
 - Python
 - `asyncio`
 
-### Next step
-A future version will replace simulated delays with real API calls using
-`aiohttp`, once async-native HTTP libraries are covered.
-
 ---
 
-## Setup
-Each project is self-contained. Install dependencies as needed per project
-(see individual files for imports used) and run directly with `python <filename>.py`.
-## 2. Async vs Sync Benchmark
+## 3. Async Countdown Timers
 
-Compares
+Runs multiple independent countdown timers concurrently, using
+`asyncio.create_task()`, to make the event loop's interleaving behavior
+visible tick by tick.
+
+### What it does
+- Prompts the user for how many timers to set, then a name and duration
+  (in seconds) for each
+- Counts each timer down to zero, printing a line every second
+- Runs all timers concurrently, so their countdowns interleave in the
+  terminal instead of running one after another
+
+### Why this matters
+Watching shorter timers finish before longer ones, even though they all
+start together, is direct proof that `asyncio` overlaps wait time instead
+of stacking it. This project also introduces `asyncio.create_task()`,
+which starts a coroutine running immediately rather than waiting for
+`await` — closer to how real agent code manages multiple in-flight tasks.
+
+### Tech
+- Python
+- `asyncio`
+
+---
