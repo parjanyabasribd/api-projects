@@ -25,38 +25,42 @@ parsing JSON responses, and turning raw data into something meaningful
 
 ---
 
+---
+
 ## 2. Async vs Sync Benchmark
 
-Compares sequential (blocking) vs concurrent (async) execution using
-simulated delays, to demonstrate the real-world speed benefit of `asyncio`.
+Compares sequential (blocking) vs concurrent (async) execution using real
+API calls, to demonstrate the real-world speed benefit of `asyncio`.
 
 ### What it does
-Simulates fetching data for 5 people two ways:
-1. **Sequentially** — using `time.sleep()`, one call after another
-2. **Concurrently** — using `asyncio.sleep()` + `asyncio.gather()`, all calls at once
+Fetches currency exchange rates (BTC, ETH, USD) from the Coinbase API two ways:
+1. **Sequentially** — using `requests`, one call after another
+2. **Concurrently** — using `aiohttp` + `asyncio.gather()`, all calls at once
 
 Both runs are timed with `time.perf_counter()`, and the results are printed
 side by side along with the speed-up factor.
 
 ### Why this matters
-`time.sleep()` blocks the entire program — nothing else can happen while
-one call is "waiting." `asyncio.sleep()` inside a coroutine yields control
-back to the event loop instead, letting `asyncio.gather()` run multiple
-"waits" concurrently rather than stacking them up one after another. This
-is the same mechanism that lets a real program make several API calls at
-once instead of waiting for each one to finish before starting the next.
+`requests` is a blocking library — even inside an `async def` function, a
+`requests.get()` call freezes the entire event loop, so nothing else can run
+during that wait. `aiohttp` is async-native: it yields control back to the
+event loop while waiting on a network response, letting `asyncio.gather()`
+run multiple requests concurrently instead of one after another.
 
-### Results(varies each time)
+### Results(may vary each time)
 | Method      | Time taken |
 |-------------|------------|
-| Sequential  | 7.89 sec   |
-| Concurrent  | 3.23 sec   |
+| Sequential  | 3.20 sec   |
+| Concurrent  | 0.41 sec   |
 
-
+Concurrent was 7.81x faster.
 
 ### Tech
 - Python
 - `asyncio`
+- `aiohttp`
+- `requests` (sequential baseline only)
+- Coinbase Exchange Rates API
 
 ---
 

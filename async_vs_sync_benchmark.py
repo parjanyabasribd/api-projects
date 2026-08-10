@@ -1,43 +1,38 @@
-import time
-import random
-
-names = ["Alice", "Bob", "Charlie", "David", "Eve"]
-
-# synchronization/sequential execution
-def main_sync():
-    for name in names:
-        fetch_data_sync(name)
-
-def fetch_data_sync(x):
-    delay = random.uniform(0.5, 3.0)
-    print(f"Initiating data fetch for Name:{x}...")
-    time.sleep(delay)
-    print(f"Data fetch completed for Name:{x} after {delay:0.2f} seconds")
-
-
-# asynchronization/concurrent execution
 import asyncio
+import aiohttp
+import requests
+import time
+
+currencies = ["BTC", "ETH", "USD"]
+
+def fetch_data_sync(currency):
+    url = "https://api.coinbase.com/v2/exchange-rates"
+    response = requests.get(url, params={"currency": currency})
+    data = response.json()
+    print(f"Currency: {currency}, Rate to USD: {data['data']['rates']['USD']}")
+
+def main_sync():
+    for currency in currencies:
+        fetch_data_sync(currency)
+
+async def fetch_data_async(session, currency):
+    url = "https://api.coinbase.com/v2/exchange-rates"
+    async with session.get(url, params={"currency": currency}) as response:
+        data = await response.json()
+        print(f"Currency: {currency}, Rate to USD: {data['data']['rates']['USD']}")
 
 async def main_async():
-    await asyncio.gather(*(fetch_data_async(name) for name in names))
-
-async def fetch_data_async(x):
-    delay = random.uniform(0.5, 3.0)
-    print(f"Initiating data fetch for Name:{x}...")
-    await asyncio.sleep(delay)
-    print(f"Data fetch completed for Name:{x} after {delay:0.2f} seconds")
-
+    async with aiohttp.ClientSession() as session:
+        await asyncio.gather(*(fetch_data_async(session, c) for c in currencies))
 
 if __name__ == "__main__":
     st = time.perf_counter()
     main_sync()
-    end = time.perf_counter()
-    sync_time = end - st
-    print(f"Executed in {sync_time:0.2f} seconds using sync.")
+    sync_time = time.perf_counter() - st
+    print(f"Executed in {sync_time:.2f} seconds using sync.\n")
 
     st = time.perf_counter()
     asyncio.run(main_async())
-    end = time.perf_counter()
-    async_time = end - st
-    print(f"Executed in {async_time:0.2f} seconds using async.")
-    print(f"Async execution was {sync_time/async_time:0.2f} times faster")
+    async_time = time.perf_counter() - st
+    print(f"Executed in {async_time:.2f} seconds using async.")
+    print(f"Async was {sync_time/async_time:.2f}x faster")
