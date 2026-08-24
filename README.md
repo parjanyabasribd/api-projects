@@ -89,3 +89,35 @@ which starts a coroutine running immediately rather than waiting for
 - `asyncio`
 
 ---
+
+## 4. Multi-Tool Assistant (Gemini Function Calling)
+
+Gives Gemini two custom tools — a GitHub user lookup and a random advice
+generator — and lets the model decide which one (if any) to call based on
+the user's question.
+
+### What it does
+- Fetches public GitHub profile stats (repos, followers, bio) for a given username
+- Fetches a random piece of advice
+- Correctly answers unrelated questions directly, without forcing a tool call
+
+### Why this matters
+This is the foundation of agentic behavior: instead of hardcoding "if input
+contains X, call Y," the model itself reasons about intent and picks the
+right tool, extracting the right arguments from natural language. This is
+the same mechanism (scaled up) that powers real AI agents.
+
+### Tech
+- Python
+- Gemini API (`google-genai`) — automatic function calling
+- GitHub public API
+- Advice Slip API
+
+### Setup
+1. Clone the repo
+2. Create a `.env` file in the root (see `.env.example` for the required variable)
+3. Add your own Gemini API key: `GEMINI_API_KEY=your_key_here`
+4. Install dependencies: `pip install google-genai requests python-dotenv`
+5. Run: `python multi_tool_assistant.py`
+
+---
