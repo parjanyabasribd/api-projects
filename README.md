@@ -25,8 +25,6 @@ parsing JSON responses, and turning raw data into something meaningful
 
 ---
 
----
-
 ## 2. Async vs Sync Benchmark
 
 Compares sequential (blocking) vs concurrent (async) execution using real
@@ -93,23 +91,32 @@ which starts a coroutine running immediately rather than waiting for
 ## 4. Multi-Tool Assistant (Gemini Function Calling)
 
 Gives Gemini two custom tools — a GitHub user lookup and a random advice
-generator — and lets the model decide which one (if any) to call based on
-the user's question.
+generator — and lets the model decide which one (or several) to call based
+on the user's question, showing exactly which tools were used.
 
 ### What it does
 - Fetches public GitHub profile stats (repos, followers, bio) for a given username
 - Fetches a random piece of advice
 - Correctly answers unrelated questions directly, without forcing a tool call
+- Displays which tool(s), if any, were actually called for transparency
 
 ### Why this matters
-This is the foundation of agentic behavior: instead of hardcoding "if input
-contains X, call Y," the model itself reasons about intent and picks the
-right tool, extracting the right arguments from natural language. This is
-the same mechanism (scaled up) that powers real AI agents.
+This demonstrates real compositional/multi-step tool use, not just a single
+lookup. For example, asking the assistant to "compare GitHub followers for
+two users, then give advice based on the result" triggers three sequential
+tool calls in one turn — two GitHub lookups plus an advice call — with the
+model reasoning over all three results to form one coherent answer. This is
+the same Reason → Act → Observe mechanism (the ReAct pattern) that powers
+real AI agents, handled automatically here by Gemini's function calling.
+
+Uses `client.chats.create()` instead of a single `generate_content()` call,
+since a chat session automatically tracks the growing conversation and tool
+call history needed for multi-step reasoning — a single stateless call
+can't do this on its own.
 
 ### Tech
 - Python
-- Gemini API (`google-genai`) — automatic function calling
+- Gemini API (`google-genai`) — automatic function calling, chat sessions
 - GitHub public API
 - Advice Slip API
 
