@@ -128,3 +128,44 @@ can't do this on its own.
 5. Run: `python multi_tool_assistant.py`
 
 ---
+
+## 5. Multi-Turn Agent (Chat with Memory + Tool Use)
+
+An interactive command-line agent that remembers the full conversation
+and can call tools — country lookups, book search, and number facts —
+reasoning across multiple turns, not just one question at a time.
+
+### What it does
+- Answers questions about countries (population, capital, languages) via
+  the REST Countries API
+- Looks up books (author, publish year, page count) via the Open Library API
+- Fetches trivia facts about numbers via the Numbers API
+- Remembers prior turns — correctly resolves follow-up questions like "what's
+  its capital?" or "who wrote it?" without repeating the subject
+- Displays a running log of every tool called during the conversation
+- Detects when the user wants to end the chat using both keyword matching
+  and an LLM-based fallback check for natural phrasing (not just "quit"/"exit")
+
+### Why this matters
+This extends the multi-tool assistant into genuine multi-turn reasoning: a
+single persistent `chat` session (`client.chats.create()`) retains full
+conversation history automatically, so the model can reference facts from
+several turns back — comparing countries or books discussed earlier, not
+just responding to the immediate message in isolation. This is the memory
+component of an AI agent, working alongside tool use and reasoning.
+
+### Tech
+- Python
+- Gemini API (`google-genai`) — chat sessions, automatic function calling
+- REST Countries API
+- Open Library API
+- Numbers API
+
+### Setup
+1. Clone the repo
+2. Create a `.env` file in the root (see `.env.example` for the required variable)
+3. Add your own Gemini API key: `GEMINI_API_KEY=your_key_here`
+4. Install dependencies: `pip install google-genai requests python-dotenv`
+5. Run: `python multi_turn_agent.py`
+
+---
