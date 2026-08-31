@@ -1,9 +1,10 @@
-import requests
 import os
+import requests
 from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
+
 
 def country_info(country_name: str) -> str:
     """Get information(population, capital, languages, etc.) about a country using the REST Countries API"""
@@ -16,6 +17,7 @@ def country_info(country_name: str) -> str:
         f"It has a population of {data['population']} and its capital is {data['capital'][0]}. "
         f"The official languages are: {', '.join(data['languages'].values())}."
     )
+
 
 def open_lib(book_title: str) -> str:
     """Get book information (title, author, publish date, etc.) when book title is provided using the Open Library API"""
@@ -31,6 +33,7 @@ def open_lib(book_title: str) -> str:
         f"Number of Pages: {data.get('number_of_pages', 'N/A')}"
     )
 
+
 def num_fact(num: int) -> str:
     """Get a fact about given number using the Numbers API"""
     response = requests.get(f"http://numbersapi.com/{num}")
@@ -38,21 +41,27 @@ def num_fact(num: int) -> str:
         return f"Could not find a fact for number '{num}'."
     return response.text
 
+
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
+MODEL = "gemini-3.5-flash-lite"
+TOOLS = [country_info, open_lib, num_fact]
+MAX_HISTORY_ITEMS = 20
+
 chat = client.chats.create(
-    model="gemini-3.5-flash-lite",
-    config={"temperature": 0.2, "tools": [country_info, open_lib, num_fact]})
+    model=MODEL,
+    config={"temperature": 0.2, "tools": TOOLS}
+)
 
 while True:
     user_input = input("Enter your text : ")
     exit_check = client.models.generate_content(
-    model="gemini-3.5-flash-lite",
-    contents=f"Does {user_input} indicate the user wants to end the conversation? Answer only 'yes' or 'no'.\nMessage: {user_input}",
-    config={"temperature": 0}
-)
-    if "yes" in exit_check.text.lower(): 
+        model=MODEL,
+        contents=f"Does {user_input} indicate the user wants to end the conversation? Answer only 'yes' or 'no'",
+        config={"temperature": 0}
+    )
 
+    if "yes" in exit_check.text.lower():
         print("Thank you for using the chat! Goodbye.")
         break
 
@@ -72,3 +81,14 @@ while True:
                 print(f"✓ {call}")
         else:
             print("\n(No tools were used for this question — answered directly.)")
+
+        # --- Context trimming: keep conversation bounded ---
+        current_history = chat.get_history()
+        if len(current_history) > MAX_HISTORY_ITEMS:
+            trimmed_history = current_history[-MAX_HISTORY_ITEMS:]
+            chat = client.chats.create(
+                model=MODEL,
+                config={"temperature": 0.2, "tools": TOOLS},
+                history=trimmed_history
+            )
+            print(f"\n[Context trimmed — keeping last {MAX_HISTORY_ITEMS} history items]")
