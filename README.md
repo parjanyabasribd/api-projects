@@ -133,7 +133,8 @@ can't do this on its own.
 
 An interactive command-line agent that remembers the full conversation
 and can call tools — country lookups, book search, and number facts —
-reasoning across multiple turns, not just one question at a time.
+reasoning across multiple turns, and automatically trimming its own
+history to stay within the model's context window.
 
 ### What it does
 - Answers questions about countries (population, capital, languages) via
@@ -142,21 +143,25 @@ reasoning across multiple turns, not just one question at a time.
 - Fetches trivia facts about numbers via the Numbers API
 - Remembers prior turns — correctly resolves follow-up questions like "what's
   its capital?" or "who wrote it?" without repeating the subject
+- Automatically trims conversation history once it exceeds a set length,
+  keeping the most recent context and discarding the oldest
 - Displays a running log of every tool called during the conversation
-- Detects when the user wants to end the chat using both keyword matching
-  and an LLM-based fallback check for natural phrasing (not just "quit"/"exit")
+- Detects when the user wants to end the chat using an LLM-based check for
+  natural phrasing, not just exact "quit"/"exit" matches
 
 ### Why this matters
-This extends the multi-tool assistant into genuine multi-turn reasoning: a
-single persistent `chat` session (`client.chats.create()`) retains full
-conversation history automatically, so the model can reference facts from
-several turns back — comparing countries or books discussed earlier, not
-just responding to the immediate message in isolation. This is the memory
-component of an AI agent, working alongside tool use and reasoning.
+A conversation can't grow forever — every model has a maximum context
+window, and an unbounded chat session will eventually fail or lose control
+over what gets remembered. This agent uses a persistent `chat` session
+(`client.chats.create()`) for multi-turn memory, then periodically checks
+the raw history length and, once it passes a threshold, rebuilds the
+session from just the most recent items — keeping the conversation
+functional indefinitely without silently overflowing the context window.
 
 ### Tech
 - Python
-- Gemini API (`google-genai`) — chat sessions, automatic function calling
+- Gemini API (`google-genai`) — chat sessions, automatic function calling,
+  history management
 - REST Countries API
 - Open Library API
 - Numbers API
