@@ -174,3 +174,52 @@ functional indefinitely without silently overflowing the context window.
 5. Run: `python multi_turn_agent.py`
 
 ---
+
+## 6. Semantic Search with Embeddings (Gemini + ChromaDB)
+
+A command-line script that stores a set of short documents in a local
+vector database and finds the closest match to a natural-language question
+by meaning rather than by keywords.
+
+### What it does
+- Stores 8 short documents on unrelated everyday topics (food, weather,
+  sports, gardening, home, games, books) in a persistent ChromaDB collection
+- Embeds both the documents and the queries with Gemini's embedding model,
+  handled automatically through Chroma's `GoogleGeminiEmbeddingFunction`
+- Finds the right document even when the question shares almost no words
+  with it, e.g. "natural yeast" finds the sourdough document and "water bill"
+  finds the leaky tap document
+- Prints the closest match for each query along with its distance
+  (smaller distance means a closer match)
+- Loads documents with `upsert` and fixed IDs, so re-running the script
+  never creates duplicates
+- Saves the collection to disk with `PersistentClient`, so the data
+  survives between runs
+
+### Why this matters
+Keyword search fails when a question is phrased differently from the text
+it should find. Embeddings turn text into vectors where similar meaning
+means nearby numbers, and a vector database makes searching those vectors
+fast. This is the retrieval half of RAG (Retrieval-Augmented Generation),
+where an LLM answers using documents fetched from a vector store.
+
+The script also shows a limit worth knowing: a vector search always returns
+the nearest document, even when nothing relevant exists. A query about
+rockets, with no rocket document stored, still returned the closest
+unrelated document, but with a clearly larger distance than the real
+matches. Real retrieval systems use a distance cutoff to answer
+"no good match" instead of passing an irrelevant document to the model.
+
+### Tech
+- Python
+- Gemini API (`google-genai`) — `gemini-embedding-001` embeddings
+- ChromaDB — persistent vector store, `upsert`, similarity queries
+
+### Setup
+1. Clone the repo
+2. Create a `.env` file in the root (see `.env.example` for the required variable)
+3. Add your own Gemini API key: `GEMINI_API_KEY=your_key_here`
+4. Install dependencies: `pip install chromadb google-genai python-dotenv`
+5. Run: `python embeddings_builtin.py`
+
+---
